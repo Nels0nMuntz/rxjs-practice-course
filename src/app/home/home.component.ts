@@ -20,27 +20,24 @@ import { createHttpObserverable } from "../common/util";
 export class HomeComponent implements OnInit {
   private http$ = createHttpObserverable("/courses");
 
-  beginnerCourses: Course[] = [];
+  beginnerCourses$: Observable<Course[]>
 
-  advancedCourses: Course[] = [];
+  advancedCourses$: Observable<Course[]>
 
   constructor() {}
 
   ngOnInit() {
     const courses$ = this.http$.pipe(
-      map((response) => Object.values(response["payload"]) as Course[])
+      map((response) => Object.values(response["payload"]) as Course[]),
+      shareReplay()
     );
 
-    courses$.subscribe(
-      (courses) => {
-        this.beginnerCourses = courses.filter(
-          (course) => course.category == "BEGINNER"
-        );
-        this.advancedCourses = courses.filter(
-          (course) => course.category == "ADVANCED"
-        );
-      },
-      (error) => console.error("Error loading courses", error)
-    );
+    this.beginnerCourses$ = courses$.pipe(
+      map((courses) => courses.filter((course) => course.category == "BEGINNER")),
+    )
+
+    this.advancedCourses$ = courses$.pipe(
+      map((courses) => courses.filter((course) => course.category == "ADVANCED")),
+    )
   }
 }
