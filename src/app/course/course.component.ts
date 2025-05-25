@@ -16,6 +16,7 @@ import {
 import { merge, fromEvent, Observable, concat } from 'rxjs';
 import { Lesson } from '../model/lesson';
 import { createHttpObserverable } from '../common/util';
+import { debug, DebugLevel } from '../common/debug';
 
 
 @Component({
@@ -41,21 +42,22 @@ export class CourseComponent implements OnInit, AfterViewInit {
 
         this.courseId = this.route.snapshot.params['id'];
 
-        this.course$ = createHttpObserverable(`/courses/${this.courseId}`)
+        this.course$ = createHttpObserverable(`/courses/${this.courseId}`).pipe(
+            debug(DebugLevel.DEBUG, "Course details"),
+        )
     }
 
 
     ngAfterViewInit() {
-        const initialLessons$ = this.loadLessons()
-        const searchLessons$ = fromEvent(this.input.nativeElement, 'keyup')
+        this.lessons$ = fromEvent(this.input.nativeElement, 'keyup')
             .pipe(
                 map((event: any) => event.target.value),
+                startWith(""),
+                debug(DebugLevel.DEBUG, "Search input"),
                 debounceTime(500),
                 distinctUntilChanged(),
                 switchMap(this.loadLessons)
             )
-
-        this.lessons$ = concat(initialLessons$, searchLessons$)
     }
 
     loadLessons = (search: string = "") => {
