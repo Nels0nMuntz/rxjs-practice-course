@@ -28,8 +28,18 @@ export class HomeComponent implements OnInit {
 
   ngOnInit() {
     const courses$ = this.http$.pipe(
+      // Error handling strategy 1: catchError and return an empty array
+      // catchError((error) => {
+      //   console.log("Error loading courses", error);
+      //   return of({ payload: []});
+      // }),
       map((response) => Object.values(response["payload"]) as Course[]),
-      shareReplay()
+      shareReplay(),
+
+      // Error handling strategy 2: retry the request after a delay
+      retryWhen((errors) => errors.pipe(
+        delayWhen(() => timer(1000)),
+      ))
     );
 
     this.beginnerCourses$ = courses$.pipe(
